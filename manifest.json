@@ -1,0 +1,9 @@
+{
+  "id": "add-to-home",
+  "name": "Add to Home",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "Adds 'Add to Home' to the file menu: appends a link to the Homepage note",
+  "author": "cranky",
+  "isDesktopOnly": false
+}
