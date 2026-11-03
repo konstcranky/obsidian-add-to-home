@@ -26,7 +26,26 @@ module.exports = class AddToHome extends Plugin {
     if (home.path === file.path) return new Notice('Це і є Home');
     const link = this.app.fileManager.generateMarkdownLink(file, home.path);
     if ((await this.app.vault.read(home)).includes(link)) return new Notice('Вже є в ' + home.basename);
-    await this.app.vault.process(home, t => t + (t && !t.endsWith('\n') ? '\n' : '') + '- ' + link + '\n');
+    const title = await this.title(file).catch(() => '');
+    const line = '- ' + link + (title && title !== file.basename ? ': ' + title : '') + '\n';
+    await this.app.vault.process(home, t => t + (t && !t.endsWith('\n') ? '\n' : '') + line);
     new Notice('Додано в ' + home.basename);
+  }
+
+  // заголовок документа для відомих типів; '' якщо невідомий тип або заголовка нема
+  async title(file) {
+    const ext = file.extension.toLowerCase();
+    let t = '';
+    if (ext === 'md') {
+      const c = this.app.metadataCache.getFileCache(file);
+      t = c?.frontmatter?.title || c?.headings?.find(h => h.level === 1)?.heading || '';
+    } else if (['html', 'htm', 'xhtml'].includes(ext)) {
+      const doc = new DOMParser().parseFromString(await this.app.vault.cachedRead(file), 'text/html');
+      t = doc.title || doc.querySelector('h1')?.textContent || '';
+    } else if (ext === 'svg') {
+      const doc = new DOMParser().parseFromString(await this.app.vault.cachedRead(file), 'image/svg+xml');
+      t = doc.querySelector('title')?.textContent || '';
+    }
+    return String(t).replace(/\s+/g, ' ').trim();
   }
 };
